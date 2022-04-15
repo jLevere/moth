@@ -20,4 +20,4 @@ Next go to discord and get the message_id of the inital message and load it and 
 
 
 
-Moth must be run as root to interact with gpio.  Make sure your file permissions are safe and sane.
+Moth must be run as root to interact with gpio.  Make sure your file permissions are safe and sane. 755 is not a bad choice.
