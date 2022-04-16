@@ -116,8 +116,9 @@ def test_pin(pin, cycles):
             # this helps with acuracy
             time.sleep(0.1)
 
-
-        return avg / cycles if time != 0 else 0
+        avg = avg / cycles if time != 0 else 0
+        logging.info(f"light value: {avg}")
+        return avg
 
 
 def print_light_values(pin):
