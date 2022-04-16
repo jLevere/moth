@@ -7,17 +7,21 @@ Uses adafruit blinka circuitpython package to interact with raspberrypi gpio.
 `sudo pip install Adafruit-Blinka`  to install package
 `sudo pip install requests` as well to get the requests http package to interact with webhooks
 
-## Setup
+## conf
 
-First run the `print_light_values` function to find what the normal and dark values are.  Set the darkpoint value in `main` with this.
-
-Next set the gpio pin in the `main` function.  On raspberrypi gpio are designated as board.D`{pin_number}`  
-
-Then generate a discord webhook and load it into the `make_inital_message` function.  
-
-Next go to discord and get the message_id of the inital message and load it and the webhook into the `notify` function.  This will allow moth to update the message inplace without resending it.
-
-
+```
+{
+    "webhook": "",                  <- add valid webhook to the channel you want the notifications in.
+    "bot": {                        <- these are the values that are used to create the first message which is not updated.
+        "username": "moth",
+        "avatar_url": "https://i.imgur.com/GZetIAl.png"
+    },
+    "pin": 3,                       <- the gpio pin the capacitor is on.
+    "blackpoint": 5,                <- if you already know the blackpoint, else use wizard.
+    "cycles": 10,                   <- samples taken per test. 10 is a good number.
+    "sleep" : 3                     <- time to wait between each message update.
+}
+```
 
 
 Moth must be run as root to interact with gpio.  Make sure your file permissions are safe and sane. 755 is not a bad choice.
