@@ -25,3 +25,6 @@ Uses adafruit blinka circuitpython package to interact with raspberrypi gpio.
 
 
 Moth must be run as root to interact with gpio.  Make sure your file permissions are safe and sane. 755 is not a bad choice.
+
+
+increase the logging level to help with troubleshooting.
