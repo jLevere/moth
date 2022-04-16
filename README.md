@@ -4,8 +4,9 @@ Updates discord message if someone is in the club office.  Uses raspi to check l
 
 Uses adafruit blinka circuitpython package to interact with raspberrypi gpio.
 
-`sudo pip install Adafruit-Blinka`  to install package
-`sudo pip install requests` as well to get the requests http package to interact with webhooks
+`sudo pip install Adafruit-Blinka` to install gpio package
+
+`sudo pip install requests` for webhook interactions.
 
 ## conf
 
