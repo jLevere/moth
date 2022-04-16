@@ -1,0 +1,11 @@
+{
+    "webhook": "",
+    "bot": {
+        "username": "moth",
+        "avatar_url": "https://i.imgur.com/GZetIAl.png"
+    },
+    "pin": 3,
+    "blackpoint": 5,
+    "cycles": 10,
+    "sleep" : 3
+}
