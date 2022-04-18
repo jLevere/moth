@@ -28,4 +28,12 @@ Uses adafruit blinka circuitpython package to interact with raspberrypi gpio.
 Moth must be run as root to interact with gpio.  Make sure your file permissions are safe and sane. 755 is not a bad choice.
 
 
-increase the logging level to help with troubleshooting.
+## systemd
+
+To run as a service with systemd add the service file to /etc/systemd/system
+
+run `sudo systemctl daemon-reload` to load the unit file
+
+then `sudo systemctl start moth.service` to start the service
+
+you can add add moth.service to start on boot with `systemctl enable moth.status`  but it really isn't designed for that.
