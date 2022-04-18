@@ -219,13 +219,19 @@ def main(quiet, sim=False):
 
     print(f"starting with blackpoint: {blackpoint}")
 
+    light_is_on = False
     while True:
+
         if sim:
             light = (simulate_pin_test(pin, conf['cycles']) < blackpoint)
         else:
             light = (test_pin(pin, int(conf['cycles'])) < blackpoint)
 
-        webhook.notify(f'someone is in the office: {light}')
+
+        if light_is_on == light:
+            webhook.notify(f'someone is in the office: {light}')
+
+        light_is_on = light
 
         time.sleep(conf['sleep'])
 
