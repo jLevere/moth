@@ -8,13 +8,8 @@ import board
 import math
 import sys
 from digitalio import DigitalInOut, Direction
+from adafruit_blinka.microcontroller.bcm283x.pin import Pin
 
-
-logging.basicConfig(
-    level=logging.ERROR,
-    format='%(asctime)s %(levelname)s: %(message)s',
-    datefmt='%m/%d/%Y %I:%M:%S %p'
-    )
 
 """ simple program to update discord message with the lights status in club office.
 
@@ -22,6 +17,12 @@ logging.basicConfig(
     I used a 0.1uf for low light conditions found in office.
 """
 
+
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='%(asctime)s %(levelname)s: %(message)s',
+    datefmt='%m/%d/%Y %I:%M:%S %p'
+    )
 
 
 class Webhook():
@@ -32,12 +33,38 @@ class Webhook():
     def __init__(self):
         with open('conf.json', encoding='utf-8') as f:
             self.conf = json.load(f)
+        self.errors = 0
+        self.allowed_errors = 100
 
     def _update_conf(self):
         """ loads the current conf into file
         """
         with open('conf.json', 'w', encoding='utf-8') as f:
             json.dump(self.conf, f, indent=4, ensure_ascii=False)
+
+    def _good_response(self, response):
+        """ check the response code on response.  also kill if error counter is too high.
+        """
+        if self.errors > self.allowed_errors:
+            logging.error(f"more than {self.allowed_errors} http errors have occured, killing to prevent ip banning by discord")
+            raise SystemExit
+
+        if response.status_code in [200, 204]:
+            logging.info(f'Webhook updated {response.status_code} {response.content}')
+            return True
+        elif response.status_code == 404:
+            logging.error(f"Discord 404, couldnt find webhook serverside.  Make sure your webhook is set up correctly and message_id is correct.  \n{response.content}")
+            self.errors = self.errors + 1
+            return False 
+        elif response.status_code == 403:
+            logging.error(f"Discord perms denied 403, make sure you webhook is set up correctly and message_id is correct {response.content}")
+            self.errors = self.errors + 1
+            return False
+        else:
+            logging.error(f'Error sending webhook: {response.status_code} {response.content}')
+            self.errors = self.errors + 1
+            return False
+
 
     def _send(self, content=None):
         """ sends a webhook and saves its message id for further use.
@@ -56,17 +83,17 @@ class Webhook():
                 data=data,
                 params={"wait": True}
             )
+
+            if self._good_response(response):
+                msg = json.loads((response.content).decode('utf-8'))
+                self.conf['message_id'] = msg['id']
+                self._update_conf()
+                return msg                
+
         except requests.exceptions.RequestException as e:
             logging.error(f'webhook post errored with: {e}')
-       
-        if response and response.status_code in [200, 204]:
-            msg = json.loads((response.content).decode('utf-8'))
-            self.conf['message_id'] = msg['id']
-            self._update_conf()
-            return msg
-        else:
-            logging.error(f'Error sending webhook: {response.status_code} {response.content}')
             return None
+
 
 
     def _edit(self, content):
@@ -81,10 +108,12 @@ class Webhook():
         url = f'{webhook}/messages/{id}'
 
         try:
-            resp = requests.patch(url, data=data)
-            logging.info(f'Webhook updated {resp.status_code} {resp.content}')
+            response = requests.patch(url, data=data)
+
+            self._good_response(response)
+
         except requests.exceptions.RequestException as e:
-            logging.error(f'Error sending webhook: {e} \n make sure your message_id is valid.')
+            logging.error(f'Error sending webhook: {e}')
 
 
     def notify(self, content):
@@ -95,8 +124,11 @@ class Webhook():
         else:
             self._send(content)
 
+def simulate_pin_test(pin, cycles):
+    return math.floor(random.randrange(0, 20))
 
-def test_pin(pin, cycles):
+
+def test_pin(pin: int, cycles: int):
     """ returns double relivite to the light intensity.
     higher numbers are higher light intensity.
     """
@@ -109,6 +141,7 @@ def test_pin(pin, cycles):
             rc.direction = Direction.INPUT
 
             avg = 0
+            final = 0
             while rc.value is False:
                 final = time.time() - start_time
 
@@ -151,33 +184,48 @@ def configure_blackpoint(pin, cycles):
     return avg
 
 
-def main(quiet):
-
+def main(quiet, sim=False):
     with open('conf.json') as f:
         conf = json.load(f)
 
-    if not quiet:
-        choice = input("Test(t) to test or enter to start: ")
-        if choice.lower()[:1] == 't':
-            print_light_values(conf['pin'])
+    pin = Pin(conf['pin'])
+    blackpoint = conf['blackpoint']
 
-        choice = input("Yes(Y) to configure blackpoint with wizard, else No(N) to use blackpoint from conf [Y/N]: ")
-        
-        if choice.lower()[:1] == 'y':
-            blackpoint = configure_blackpoint(conf['pin'], conf['cycles'])
-        else:
-            blackpoint = conf['blackpoint']
+    if quiet:
+        # pass used for clarity
+        pass
+    else:
+        choice = input("Press enter to start or type more for more options: ")
+        if choice == 'more':
+            choice = input("(t) for light_test, (w) for config wizard, (s) for simulation mode: ")
+            choice = choice.lower()[:1]
+
+            if choice == 't':
+                print_light_values(pin)
+            elif choice == 'w':
+                blackpoint = configure_blackpoint(pin, conf['cycles'])
+            elif choice == 's':
+                blackpoint = conf['blackpoint']
+                sim = True
+            else:
+                print('invalid option, exiting')
+                raise SystemExit
+
 
     webhook = Webhook()
 
     print(f"starting with blackpoint: {blackpoint}")
 
     while True:
-        light = (test_pin(conf['pin'], 10) < blackpoint)
+        if sim:
+            light = (simulate_pin_test(pin, conf['cycles']) < blackpoint)
+        else:
+            light = (test_pin(pin, int(conf['cycles'])) < blackpoint)
+
         webhook.notify(f'someone is in the office: {light}')
 
         time.sleep(conf['sleep'])
 
 if __name__ == '__main__':
-    main(sys.argv[1] == 'quiet')
+    main(len(sys.argv) > 1 and sys.argv[1] == 'quiet', sim=False)
         
