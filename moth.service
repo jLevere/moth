@@ -4,8 +4,7 @@ After=multi-user.target
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/python3 /home/pi/moth/main.py
-Restart=on-failure
+ExecStart=/usr/bin/python3 /home/pi/moth/main.py quiet
 
 [Install]
 WantedBy=multi-user.target
