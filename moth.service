@@ -1,0 +1,13 @@
+[Unit]
+Description=room occupation detector
+After=multi-user.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 /home/pi/moth/main.py
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+Alias=moth.service
+
