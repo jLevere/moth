@@ -6,6 +6,7 @@ import json
 import logging
 import board
 import math
+import sys
 from digitalio import DigitalInOut, Direction
 
 
@@ -150,21 +151,22 @@ def configure_blackpoint(pin, cycles):
     return avg
 
 
-def main():
+def main(quiet):
 
     with open('conf.json') as f:
         conf = json.load(f)
 
-    choice = input("Test(t) to test or enter to start: ")
-    if choice.lower()[:1] == 't':
-        print_light_values(conf['pin'])
+    if not quiet:
+        choice = input("Test(t) to test or enter to start: ")
+        if choice.lower()[:1] == 't':
+            print_light_values(conf['pin'])
 
-    choice = input("Yes(Y) to configure blackpoint with wizard, else No(N) to use blackpoint from conf [Y/N]: ")
-    
-    if choice.lower()[:1] == 'y':
-        blackpoint = configure_blackpoint(conf['pin'], conf['cycles'])
-    else:
-        blackpoint = conf['blackpoint']
+        choice = input("Yes(Y) to configure blackpoint with wizard, else No(N) to use blackpoint from conf [Y/N]: ")
+        
+        if choice.lower()[:1] == 'y':
+            blackpoint = configure_blackpoint(conf['pin'], conf['cycles'])
+        else:
+            blackpoint = conf['blackpoint']
 
     webhook = Webhook()
 
@@ -177,4 +179,5 @@ def main():
         time.sleep(conf['sleep'])
 
 if __name__ == '__main__':
-    main()
+    main(sys.argv[1] == 'quiet')
+        
