@@ -4,7 +4,8 @@ After=multi-user.target
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/python3 /home/pi/moth/main.py quiet
+WorkingDirectory=/home/ubuntu/moth
+ExecStart=/usr/bin/python3 main.py quiet
 
 [Install]
 WantedBy=multi-user.target
