@@ -19,10 +19,13 @@ from adafruit_blinka.microcontroller.bcm283x.pin import Pin
 
 
 logging.basicConfig(
-    level=logging.DEBUG,
+    level=logging.ERROR,
     format='%(asctime)s %(levelname)s: %(message)s',
-    datefmt='%m/%d/%Y %I:%M:%S %p'
+    datefmt='%m/%d/%Y %I:%M:%S %p',
+    filename='moth.log',
+    filemode='w'
     )
+
 
 
 class Webhook():
