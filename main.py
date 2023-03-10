@@ -14,6 +14,9 @@ import RPi.GPIO as GPIO
 """ simple program to update discord message with the lights status in club office.
 """
 
+with open('conf.json') as f:
+    conf = json.load(f)
+
 
 logging.basicConfig(
     level=logging.ERROR,
@@ -142,7 +145,10 @@ def test_print_callback(channel):
     Args:
         channel (_type_): _description_
     """
-    print("triggered")
+    if GPIO.input(conf['pin']):
+        print("TRUE")
+    else:
+        print("FALSE")
 
 def test_light_status(pin: int) -> None:
     """prints light status to stdout
@@ -176,7 +182,7 @@ def main(quiet, sim=False):
             choice = choice.lower()[:1]
 
             if choice == 't':
-                print_light_status(pin)
+                test_light_status(pin)
             elif choice == 's':
                 blackpoint = conf['blackpoint']
                 sim = True
