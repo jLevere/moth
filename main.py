@@ -139,16 +139,13 @@ def signal_handler(sig, frame):
     GPIO.cleanup()
     sys.exit(0)
     
-def test_print_callback(channel):
+def test_print_callback(pin):
     """print something on callback
 
     Args:
-        channel (_type_): _description_
+        pin (_type_): _description_
     """
-    if GPIO.input(conf['pin']):
-        print("TRUE")
-    else:
-        print("FALSE")
+    print(GPIO.input(pin))
 
 def test_light_status(pin: int) -> None:
     """prints light status to stdout
@@ -164,6 +161,26 @@ def test_light_status(pin: int) -> None:
 
     signal.signal(signal.SIGINT, signal_handler)
     signal.pause()
+    
+    
+    
+def graph_light(pin):
+    GPIO.setmode(GPIO.BCM)
+    GPIO.setup(pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+    
+    
+    print("graphing sensor output")
+    for i in range(100):
+        
+        if GPIO.input(pin):
+            print("-", end='')
+        else:
+            print("_", end='')
+        
+        time.sleep(0.5)
+    print("finished")
+        
+
 
 def main(quiet, sim=False):
     with open('conf.json') as f:
@@ -178,7 +195,7 @@ def main(quiet, sim=False):
     else:
         choice = input("Press enter to start or type more for more options: ")
         if choice == 'more':
-            choice = input("(t) for light_test, (s) for simulation mode: ")
+            choice = input("(t) for light_test, (s) for simulation mode, (g) for graph: ")
             choice = choice.lower()[:1]
 
             if choice == 't':
@@ -186,6 +203,8 @@ def main(quiet, sim=False):
             elif choice == 's':
                 blackpoint = conf['blackpoint']
                 sim = True
+            elif choice == 'g':
+                graph_light(pin)
             else:
                 print('invalid option, exiting')
                 raise SystemExit
