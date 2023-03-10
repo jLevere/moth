@@ -6,6 +6,7 @@ import json
 import logging
 import math
 import sys
+import signal
 
 import RPi.GPIO as GPIO
 
@@ -123,11 +124,27 @@ class Webhook():
         else:
             self._send(content)
 
+
+############################## pin interactions ###########################
+
+
 def simulate_pin_test(pin, cycles):
     return math.floor(random.randrange(0, 20))
 
 
-def print_light_status(pin: int) -> None:
+def signal_handler(sig, frame):
+    GPIO.cleanup()
+    sys.exit(0)
+    
+def test_print_callback(channel):
+    """print something on callback
+
+    Args:
+        channel (_type_): _description_
+    """
+    print("triggered")
+
+def test_light_status(pin: int) -> None:
     """prints light status to stdout
 
     Args:
@@ -136,11 +153,11 @@ def print_light_status(pin: int) -> None:
     
     GPIO.setmode(GPIO.BCM)
     GPIO.setup(pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-    
-    while True:
-        GPIO.wait_for_edge(pin, GPIO.FALLING)
-        print("triggered")
 
+    GPIO.add_event_detect(pin, GPIO.FALLING, callback=test_print_callback, bouncetime=100)
+
+    signal.signal(signal.SIGINT, signal_handler)
+    signal.pause()
 
 def main(quiet, sim=False):
     with open('conf.json') as f:
