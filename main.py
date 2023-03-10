@@ -4,17 +4,13 @@ import requests
 import random
 import json
 import logging
-import board
 import math
 import sys
-from digitalio import DigitalInOut, Direction
-from adafruit_blinka.microcontroller.bcm283x.pin import Pin
+
+import RPi.GPIO as GPIO
 
 
 """ simple program to update discord message with the lights status in club office.
-
-    uses raspberrypi 3.3v with photoresistor to alter the charge time of capacitor.  when cap is full it raises gpio to high.
-    I used a 0.1uf for low light conditions found in office.
 """
 
 
@@ -131,67 +127,26 @@ def simulate_pin_test(pin, cycles):
     return math.floor(random.randrange(0, 20))
 
 
-def test_pin(pin: int, cycles: int):
-    """ returns double relivite to the light intensity.
-    higher numbers are higher light intensity.
+def print_light_status(pin: int) -> None:
+    """prints light status to stdout
+
+    Args:
+        pin (int): _description_
     """
-    with DigitalInOut(pin) as rc:
-        for i in range(cycles):
-            rc.direction = Direction.OUTPUT
-            rc.value = False
-
-            start_time = time.time()
-            rc.direction = Direction.INPUT
-
-            avg = 0
-            final = 0
-            while rc.value is False:
-                final = time.time() - start_time
-
-            avg = avg + math.floor(final * 100000)
-
-            # this helps with acuracy
-            time.sleep(0.1)
-
-        avg = avg / cycles if time != 0 else 0
-        logging.info(f"light value: {avg}")
-        return avg
-
-
-def print_light_values(pin):
-    """ prints light value ever second for debugging and setting darkpoint
-    """
-    while True:
-        time.sleep(1)
-        print(test_pin(pin, 10))
-
-
-def configure_blackpoint(pin, cycles):
-    print("configuing light levels...")
-    input("turn the lights off and press enter")
-    dark = test_pin(pin, cycles)
-    print(f"dark is set to: {dark}")
-
-    input("now turn the lights on and press enter")
-    light = test_pin(pin, cycles)
-    print(f"light is set to: {light}")
-
-    if dark == 0:
-        print("dark is registering as value 0, which isn't right.  please check your hardware")
-        raise SystemExit
     
-    avg = (light + dark) / 2
-
-    print(f'the darkpoint is set to: {avg}')
-
-    return avg
+    GPIO.setmode(GPIO.BCM)
+    GPIO.setup(pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+    
+    while True:
+        GPIO.wait_for_edge(pin, GPIO.FALLING)
+        print("triggered")
 
 
 def main(quiet, sim=False):
     with open('conf.json') as f:
         conf = json.load(f)
 
-    pin = Pin(conf['pin'])
+    pin = conf['pin']
     blackpoint = conf['blackpoint']
 
     if quiet:
@@ -200,13 +155,11 @@ def main(quiet, sim=False):
     else:
         choice = input("Press enter to start or type more for more options: ")
         if choice == 'more':
-            choice = input("(t) for light_test, (w) for config wizard, (s) for simulation mode: ")
+            choice = input("(t) for light_test, (s) for simulation mode: ")
             choice = choice.lower()[:1]
 
             if choice == 't':
-                print_light_values(pin)
-            elif choice == 'w':
-                blackpoint = configure_blackpoint(pin, conf['cycles'])
+                print_light_status(pin)
             elif choice == 's':
                 blackpoint = conf['blackpoint']
                 sim = True
@@ -224,9 +177,6 @@ def main(quiet, sim=False):
 
         if sim:
             light = (simulate_pin_test(pin, conf['cycles']) < blackpoint)
-        else:
-            light = (test_pin(pin, int(conf['cycles'])) < blackpoint)
-
 
         if light_is_on == light:
             webhook.notify(f'someone is in the office: {light}')
