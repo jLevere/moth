@@ -172,7 +172,7 @@ def graph_light(pin):
     print("graphing sensor output")
     for i in range(100):
         
-        if GPIO.input(pin):
+        if GPIO.input(pin) == GPIO.HIGH:
             print("-", end='')
         else:
             print("_", end='')
