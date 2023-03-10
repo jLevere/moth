@@ -166,7 +166,7 @@ def test_light_status(pin: int) -> None:
     
 def graph_light(pin):
     GPIO.setmode(GPIO.BCM)
-    GPIO.setup(pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+    GPIO.setup(pin, GPIO.IN)
     
     
     print("graphing sensor output")
